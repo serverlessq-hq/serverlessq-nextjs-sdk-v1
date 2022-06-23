@@ -5,7 +5,7 @@ type QueueResponse = {
   message: string
 }
 
-export type EnqueuOptions = {
+export type EnqueueOptions = {
   target: string
   method: Method
 }
@@ -27,7 +27,7 @@ export class Queue {
   /**
    * send a message to the `Queue`
    */
-  public async enqueue(options: EnqueuOptions): Promise<QueueResponse> {
+  public async enqueue(options: EnqueueOptions): Promise<QueueResponse> {
     const { method, target } = options
 
     if (!options.target || !options.method) {
