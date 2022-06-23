@@ -1,6 +1,5 @@
 import { Queue, EnqueueOptions } from './queue'
 
-const queue = new Queue()
+const { enqueue } = new Queue()
 
-export { queue, EnqueueOptions as EnqueuOptions }
-export default queue
+export { enqueue, EnqueueOptions }

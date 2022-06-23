@@ -27,12 +27,10 @@ export class Queue {
   /**
    * send a message to the `Queue`
    */
-  public async enqueue(options: EnqueueOptions): Promise<QueueResponse> {
+  enqueue = async (options: EnqueueOptions): Promise<QueueResponse> => {
     const { method, target } = options
 
-    if (!options.target || !options.method) {
-      throw new Error('no options provided')
-    }
+    this.validateOptionsOrThrow(options)
 
     const config: AxiosRequestConfig = {
       method,
@@ -48,6 +46,12 @@ export class Queue {
       return response.data
     } catch (e) {
       throw new Error('could not enqueue job')
+    }
+  }
+
+  private validateOptionsOrThrow = (options: EnqueueOptions) => {
+    if (!options.target || !options.method) {
+      throw new Error('no options provided')
     }
   }
 }

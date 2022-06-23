@@ -57,17 +57,15 @@ New for you? Go check out the official NextJS docs on [how to create env files i
 
 ## Usage
 
-Import is possible through named and default exports.
 ```typescript
-import SlsQ, { queue, EnqueuOptions } from "@serverlessq/nextjs";
+import { enqueue, EnqueueOptions } from "@serverlessq/nextjs";
 
-const options: EnqueuOptions = {
+const options: EnqueueOptions = {
     method: "GET",
     target: "https://jsonplaceholder.typicode.com/users",
   };
 
-const response = await queue.enqueue(options);
-const response = await SlsQ.enqueue(options);
+const response = await enqueue(options);
 ```
 
 <br/>

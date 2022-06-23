@@ -1,6 +1,6 @@
 import { rest } from 'msw'
 import { setupServer } from 'msw/node'
-import { EnqueuOptions, Queue } from './queue'
+import { EnqueueOptions, Queue } from './queue'
 import { beforeAll, beforeEach, afterAll, expect, describe, it } from 'vitest'
 
 const server = setupServer(
@@ -62,9 +62,9 @@ describe('enqueu', async () => {
   })
 
   it('should return successfully after enqueue', async () => {
-    const queue = new Queue()
+    const { enqueue } = new Queue()
 
-    const queueOptions: EnqueuOptions = {
+    const options: EnqueueOptions = {
       method: 'GET',
       target: 'www.google.com'
     }
@@ -74,7 +74,7 @@ describe('enqueu', async () => {
       message: 'www.google.com'
     }
 
-    const response = await queue.enqueue(queueOptions)
+    const response = await enqueue(options)
 
     expect(response).toMatchObject(exptectedResult)
   })
