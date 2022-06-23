@@ -1,6 +1,6 @@
 {
   "include": ["lib"],
-  "exclude": ["node_modules", "dist"],
+  "exclude": ["node_modules", "dist", "lib/**/*.test.ts"],
   "compilerOptions": {
     "target": "ES6",
     "module": "ESNext",

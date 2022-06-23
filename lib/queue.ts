@@ -1,4 +1,4 @@
-type Method = 'GET' | 'POST' | 'PUT' | 'DELETE'
+import axios, { AxiosRequestConfig, Method } from 'axios'
 
 type QueueResponse = {
   requestId: string
@@ -34,18 +34,18 @@ export class Queue {
       throw new Error('no options provided')
     }
 
-    try {
-      const response = await fetch(this.endpoint + target, {
-        method,
-        mode: 'no-cors',
-        headers: {
-          Accept: 'application/json',
-          'x-api-key': this.apiKey as string
-        }
-      })
+    const config: AxiosRequestConfig = {
+      method,
+      url: this.endpoint + target,
+      headers: {
+        Accept: 'application/json',
+        'x-api-key': this.apiKey as string
+      }
+    }
 
-      const data = await response.json()
-      return data
+    try {
+      const response = await axios(config)
+      return response.data
     } catch (e) {
       throw new Error('could not enqueue job')
     }
