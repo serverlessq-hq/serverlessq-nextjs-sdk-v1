@@ -1,7 +1,12 @@
 import { rest } from 'msw'
 import { setupServer } from 'msw/node'
-import { EnqueueOptions, Queue } from './queue'
-import { beforeAll, beforeEach, afterAll, expect, describe, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import {
+  EnqueueOptions,
+  Queue,
+  enqueue as enqueueStandalone,
+  EnqueueingOptions
+} from './queue'
 
 const server = setupServer(
   rest.get('https://api.serverlessq.com', (req, res, ctx) => {
@@ -35,26 +40,32 @@ describe('Queue initialization', async () => {
 
   it('should throw an error when no environment variables are set', async () => {
     expect(() => {
-      new Queue()
+      new Queue('queueId')
     }).toThrow()
   })
 
   it('should init a Queue when environment variables are set', async () => {
     process.env.SERVERLESSQ_API_TOKEN = 'token'
-    process.env.SERVERLESSQ_QUEUE_ID = 'queueId'
 
     expect(() => {
-      new Queue()
+      new Queue('queueId')
+    }).not.toThrow()
+  })
+
+  it('should allow to input option queue id', async () => {
+    process.env.SERVERLESSQ_API_TOKEN = 'token'
+
+    expect(() => {
+      new Queue('queueId2')
     }).not.toThrow()
   })
 })
 
-describe('enqueu', async () => {
+describe('enqueue', async () => {
   const OLD_ENV = process.env
 
   beforeEach(() => {
     process.env.SERVERLESSQ_API_TOKEN = 'token'
-    process.env.SERVERLESSQ_QUEUE_ID = 'queueId'
   })
 
   afterAll(() => {
@@ -62,20 +73,48 @@ describe('enqueu', async () => {
   })
 
   it('should return successfully after enqueue', async () => {
-    const { enqueue } = new Queue()
+    const { enqueue } = new Queue('queueId')
 
     const options: EnqueueOptions = {
       method: 'GET',
       target: 'www.google.com'
     }
 
-    const exptectedResult = {
+    const expected = {
       requestId: 'queueId',
       message: 'www.google.com'
     }
 
     const response = await enqueue(options)
 
-    expect(response).toMatchObject(exptectedResult)
+    expect(response).toMatchObject(expected)
+  })
+})
+describe('enqueue standalone', async () => {
+  const OLD_ENV = process.env
+
+  beforeEach(() => {
+    process.env.SERVERLESSQ_API_TOKEN = 'token'
+  })
+
+  afterAll(() => {
+    process.env = OLD_ENV
+  })
+
+  it('should return successfully after enqueue', async () => {
+    const options: EnqueueingOptions = {
+      method: 'GET',
+      target: 'www.google.com',
+      queueId: 'queueId'
+    }
+
+    const expectedResult = {
+      requestId: 'queueId',
+      message: 'www.google.com'
+    }
+
+    const response = await enqueueStandalone(options)
+
+    expect(response).toMatchObject(expectedResult)
   })
 })
