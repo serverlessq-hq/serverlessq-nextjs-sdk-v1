@@ -1,7 +1,7 @@
 import { rest } from 'msw'
 import { setupServer } from 'msw/node'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { EnqueueOptions, Queue } from './queue'
-import { beforeAll, beforeEach, afterAll, expect, describe, it } from 'vitest'
 
 const server = setupServer(
   rest.get('https://api.serverlessq.com', (req, res, ctx) => {
@@ -45,6 +45,14 @@ describe('Queue initialization', async () => {
 
     expect(() => {
       new Queue()
+    }).not.toThrow()
+  })
+
+  it('should allow to input option queue id', async () => {
+    process.env.SERVERLESSQ_API_TOKEN = 'token'
+
+    expect(() => {
+      new Queue('queueId2')
     }).not.toThrow()
   })
 })

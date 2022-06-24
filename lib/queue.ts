@@ -16,7 +16,6 @@ const client = axios.create({
 export type EnqueueOptions = {
   target: string
   method: Method
-  queueId?: string
 }
 export class Queue {
   private apiKey: string | undefined
@@ -35,7 +34,7 @@ export class Queue {
    * send a message to the `Queue`
    */
   enqueue = async (options: EnqueueOptions): Promise<QueueResponse> => {
-    const { method, target, queueId } = options
+    const { method, target } = options
 
     this.validateOptionsOrThrow(options)
 
@@ -43,7 +42,7 @@ export class Queue {
       method,
       params: {
         target,
-        id: queueId ? queueId : this.queueId
+        id: this.queueId
       },
       headers: {
         Accept: 'application/json',
