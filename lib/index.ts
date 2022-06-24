@@ -1,5 +1,3 @@
-import { Queue, EnqueueOptions } from './queue'
+import { enqueue, EnqueueOptions, Queue } from './queue'
 
-const { enqueue } = new Queue()
-
-export { enqueue, EnqueueOptions }
+export { enqueue, Queue, EnqueueOptions }
