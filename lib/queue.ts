@@ -5,36 +5,46 @@ type QueueResponse = {
   message: string
 }
 
+const client = axios.create({
+  baseURL: 'https://api.serverlessq.com',
+  timeout: 5000,
+  headers: {
+    Accept: 'application/json'
+  }
+})
+
 export type EnqueueOptions = {
   target: string
   method: Method
+  queueId?: string
 }
 export class Queue {
   private apiKey: string | undefined
   private queueId: string | undefined
-  private endpoint: string
 
-  constructor() {
+  constructor(queueId?: string) {
     this.apiKey = process.env.SERVERLESSQ_API_TOKEN
-    this.queueId = process.env.SERVERLESSQ_QUEUE_ID
+    this.queueId = process.env.SERVERLESSQ_QUEUE_ID || queueId
 
     if (!this.apiKey || !this.queueId) {
       throw new Error('missing environment variables')
     }
-    this.endpoint = `https://api.serverlessq.com?id=${this.queueId}&target=`
   }
 
   /**
    * send a message to the `Queue`
    */
   enqueue = async (options: EnqueueOptions): Promise<QueueResponse> => {
-    const { method, target } = options
+    const { method, target, queueId } = options
 
     this.validateOptionsOrThrow(options)
 
     const config: AxiosRequestConfig = {
       method,
-      url: this.endpoint + target,
+      params: {
+        target,
+        id: queueId ? queueId : this.queueId
+      },
       headers: {
         Accept: 'application/json',
         'x-api-key': this.apiKey as string
@@ -42,7 +52,7 @@ export class Queue {
     }
 
     try {
-      const response = await axios(config)
+      const response = await client(config)
       return response.data
     } catch (e) {
       throw new Error('could not enqueue job')
