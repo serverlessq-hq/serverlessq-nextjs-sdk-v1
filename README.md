@@ -23,7 +23,9 @@ ServerlessQ lets you easily create **Message Queues** and **Cron Jobs** to truly
 <br/>
 
 ## Installation
+
 Install the library through your desired package manager
+
 ```
 yarn add @serverlessq/nextjs
 ```
@@ -38,43 +40,50 @@ pnpm i @serverlessq/nextjs
 
 <br/>
 
+This library gives you easy access for using [ServerlessQ](https://serverlessq.com).
+
 ## Environment Variables
 
-This library only works when using the ServerlessQ platform. There are two ways to obtain your environment variables
+You need to set the `SERVERLESSQ_API_TOKEN` to have access to the system.
 
-1. Create an account at [app.serverlessq.com](https://app.serverlessq.com) and follow the steps described in our [documentation](https://docs.serverlessq.com/serverlessQ/getting-started) to get the queue id and your api token.
-2. Use our [Vercel Integration](https://vercel.com/integrations/serverlessq) to automatically create a queue and add the desired env vars to your Vercel scope.
+1. Create an account at [app.serverlessq.com](https://app.serverlessq.com) and follow the steps described in our [documentation](https://docs.serverlessq.com/sdks/javascript) to get the API token.
 
-You need to create a `.env.local` with the following values to use the queue properly.
+> 🔜 you can also use our Vercel Integration to automate that task 🙂
+
+If you want to use this library locally please create `.env.local` file (for next.js) with the following value:
+
 ```bash
-SERVERLESSQ_QUEUE_ID=
 SERVERLESSQ_API_TOKEN=
 ```
 
-New for you? Go check out the official NextJS docs on [how to create env files in NextJS](https://nextjs.org/docs/basic-features/environment-variables)
+New for you? Go check out the official next.js docs on [how to create env files in NextJS](https://nextjs.org/docs/basic-features/environment-variables)
 
 <br/>
 
 ## Usage
 
 ```typescript
-import { enqueue, EnqueueOptions } from "@serverlessq/nextjs";
+import { EnqueueOptions, Queue } from '@serverlessq/nextjs'
+
+const queue = new Queue(queueId)
 
 const options: EnqueueOptions = {
-    method: "GET",
-    target: "https://jsonplaceholder.typicode.com/users",
-  };
+  method: 'GET',
+  target: TARGET_URL || 'https://mock.codes/200'
+}
 
-const response = await enqueue(options);
+const response = await queue.enqueue(options)
 ```
+
+Create an instance of the class `Queue` with the queue ID. You get the queue ID from your [ServerlessQ](https://app.serverlessq.com/queue) system.
 
 <br/>
 
 ## Milestone
-- [x] Build wrapper around ServerlessQ
+
+- [x] Enqueue messages with the SQS
 - [ ] Allow dynamic queue creation
 - [ ] Add the option for advanced queue options e.g. filter, tags
-
 
 <br/>
 
