@@ -63,5 +63,16 @@
   },
   "dependencies": {
     "axios": "^0.27.2"
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/serverlessq-hq/serverlessq-nextjs.git"
+  },
+  "author": "Alessandro Volpicella",
+  "bugs": {
+    "url": "https://github.com/serverlessq-hq/serverlessq-nextjs/issues"
   }
 }
