@@ -5,13 +5,18 @@ const ENV_ERROR_MESSAGE =
 
 const OPTIONS_ERROR_MESSAGE = 'required options are missing'
 
+const NODE_ENV = process.env.NODE_ENV || 'DEVELOPMENT'
+
 type QueueResponse = {
   requestId: string
   message: string
 }
 
 const client = axios.create({
-  baseURL: 'https://api.serverlessq.com',
+  baseURL:
+    NODE_ENV === 'DEVELOPMENT'
+      ? 'https://zyceqow9zi.execute-api.us-east-2.amazonaws.com'
+      : 'https://api.serverlessq.com',
   timeout: 5000,
   headers: {
     Accept: 'application/json'
@@ -27,13 +32,40 @@ export type EnqueueingOptions = EnqueueOptions & { queueId: string }
 
 export class Queue {
   private apiKey: string | undefined
+  private queueName: string | undefined
   private queueId: string | undefined
 
-  constructor(queueId: string) {
+  constructor() {
     this.apiKey = process.env.SERVERLESSQ_API_TOKEN
-    this.queueId = queueId
     if (!this.apiKey) {
       throw new Error(ENV_ERROR_MESSAGE)
+    }
+  }
+
+  create = async (nameOfQueue: string) => {
+    console.log("Start creating queue '" + nameOfQueue + "'")
+    this.queueName = nameOfQueue
+    const createQueueApi = axios.create({
+      baseURL: `https://zyceqow9zi.execute-api.us-east-2.amazonaws.com/prod/queues/${nameOfQueue}`,
+      timeout: 5000,
+      headers: {
+        Accept: 'application/json'
+      }
+    })
+
+    const config: AxiosRequestConfig = {
+      method: 'POST',
+      headers: {
+        'x-api-key': this.apiKey as string
+      }
+    }
+
+    try {
+      const response = await createQueueApi(config)
+      return response.data
+    } catch (e) {
+      console.log('Error happened: ', e)
+      throw new Error('Error creating queue')
     }
   }
 
@@ -42,6 +74,7 @@ export class Queue {
    */
   enqueue = async (options: EnqueueOptions): Promise<QueueResponse> => {
     const { method, target } = options
+    console.log(this.queueName)
 
     this.validateOptionsOrThrow(options)
 
@@ -61,6 +94,7 @@ export class Queue {
       const response = await client(config)
       return response.data
     } catch (e) {
+      console.log('Error: ', e)
       throw new Error('could not enqueue job')
     }
   }
