@@ -1,21 +1,37 @@
-import axios, { AxiosRequestConfig, Method } from 'axios'
+import axios, { AxiosRequestConfig } from 'axios'
 
 const ENV_ERROR_MESSAGE =
   'Please set the environment variable SERVERLESSQ_API_TOKEN'
 
 const OPTIONS_ERROR_MESSAGE = 'required options are missing'
 
-const NODE_ENV = process.env.NODE_ENV || 'DEVELOPMENT'
+const NODE_ENV = process.env.NODE_ENV || 'development'
 
-type QueueResponse = {
+export type QueueResponse = {
   requestId: string
   message: string
 }
 
+export type Queue = {
+  queueType: string
+  userId: string
+  updatedAt: string
+  status: string
+  createdAt: string
+  sqsUrl: string
+  'variant#createdAt': string
+  id: string
+  arn: string
+  name: string
+  metaData: { retries: number }
+}
+
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
+
 const client = axios.create({
   baseURL:
-    NODE_ENV === 'DEVELOPMENT'
-      ? 'https://zyceqow9zi.execute-api.us-east-2.amazonaws.com'
+    NODE_ENV === 'development'
+      ? 'https://zyceqow9zi.execute-api.us-east-2.amazonaws.com/prod'
       : 'https://api.serverlessq.com',
   timeout: 5000,
   headers: {
@@ -23,14 +39,20 @@ const client = axios.create({
   }
 })
 
-export type EnqueueOptions = {
+/**
+ * @param target - the target of the message queue
+ * @param method - http method executed against the target
+ * @param queueId - the id of the message queue
+ */
+export type EnqueueOptionsWithQueueId = {
   target: string
-  method: Method
+  method: HttpMethod
+  queueId: string
 }
 
-export type EnqueueingOptions = EnqueueOptions & { queueId: string }
+export type EnqueueOptions = Omit<EnqueueOptionsWithQueueId, 'queueId'>
 
-export class Queue {
+export class QueueClient {
   private apiKey: string | undefined
   private queueName: string | undefined
   private queueId: string | undefined
@@ -42,11 +64,11 @@ export class Queue {
     }
   }
 
-  create = async (nameOfQueue: string) => {
+  createOrGetQueue = async (nameOfQueue: string): Promise<Queue> => {
     console.log("Start creating queue '" + nameOfQueue + "'")
     this.queueName = nameOfQueue
-    const createQueueApi = axios.create({
-      baseURL: `https://zyceqow9zi.execute-api.us-east-2.amazonaws.com/prod/queues/${nameOfQueue}`,
+    const createOrGetQueueApi = axios.create({
+      baseURL: `https://zyceqow9zi.execute-api.us-east-2.amazonaws.com/prod/queues/${this.queueName}`,
       timeout: 5000,
       headers: {
         Accept: 'application/json'
@@ -61,10 +83,11 @@ export class Queue {
     }
 
     try {
-      const response = await createQueueApi(config)
-      return response.data
+      const createOrGetQueue = (await createOrGetQueueApi(config)).data as Queue
+      this.queueId = createOrGetQueue.id
+      return createOrGetQueue
     } catch (e) {
-      console.log('Error happened: ', e)
+      console.error('Error (createOrGetQueue): ', e)
       throw new Error('Error creating queue')
     }
   }
@@ -74,7 +97,6 @@ export class Queue {
    */
   enqueue = async (options: EnqueueOptions): Promise<QueueResponse> => {
     const { method, target } = options
-    console.log(this.queueName)
 
     this.validateOptionsOrThrow(options)
 
@@ -94,7 +116,7 @@ export class Queue {
       const response = await client(config)
       return response.data
     } catch (e) {
-      console.log('Error: ', e)
+      console.error('Error (enqueue): ', e)
       throw new Error('could not enqueue job')
     }
   }
@@ -106,9 +128,11 @@ export class Queue {
   }
 }
 
-export const enqueue = async (
-  options: EnqueueOptions & { queueId: string }
-) => {
+/**
+ * enqueue a message to an already existing queue
+ * @param options - required options to enqueue a message
+ */
+export const enqueue = async (options: EnqueueOptionsWithQueueId) => {
   const { method, target, queueId } = options
   const apiKey = process.env.SERVERLESSQ_API_TOKEN
 

@@ -3,10 +3,10 @@ import { setupServer } from 'msw/node'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import {
   EnqueueOptions,
-  Queue,
+  QueueClient,
   enqueue as enqueueStandalone,
-  EnqueueingOptions
-} from './queue'
+  EnqueueOptionsWithQueueId
+} from './queue-client'
 
 const server = setupServer(
   rest.get('https://api.serverlessq.com', (req, res, ctx) => {
@@ -40,7 +40,7 @@ describe('Queue initialization', async () => {
 
   it('should throw an error when no environment variables are set', async () => {
     expect(() => {
-      new Queue('queueId')
+      new QueueClient()
     }).toThrow()
   })
 
@@ -48,7 +48,7 @@ describe('Queue initialization', async () => {
     process.env.SERVERLESSQ_API_TOKEN = 'token'
 
     expect(() => {
-      new Queue('queueId')
+      new QueueClient()
     }).not.toThrow()
   })
 
@@ -56,7 +56,7 @@ describe('Queue initialization', async () => {
     process.env.SERVERLESSQ_API_TOKEN = 'token'
 
     expect(() => {
-      new Queue('queueId2')
+      new QueueClient()
     }).not.toThrow()
   })
 })
@@ -73,7 +73,7 @@ describe('enqueue', async () => {
   })
 
   it('should return successfully after enqueue', async () => {
-    const { enqueue } = new Queue('queueId')
+    const { enqueue } = new QueueClient()
 
     const options: EnqueueOptions = {
       method: 'GET',
@@ -102,7 +102,7 @@ describe('enqueue standalone', async () => {
   })
 
   it('should return successfully after enqueue', async () => {
-    const options: EnqueueingOptions = {
+    const options: EnqueueOptionsWithQueueId = {
       method: 'GET',
       target: 'www.google.com',
       queueId: 'queueId'
