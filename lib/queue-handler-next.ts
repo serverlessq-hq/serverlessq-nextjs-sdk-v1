@@ -3,36 +3,28 @@ import { HttpMethod, QueueClient } from './queue-client'
 
 const VERCEL_URL = process.env.VERCEL_URL
 const IS_VERCEL = process.env.VERCEL
-
+const LOCAL_DEVELOPMENT_ERROR =
+  'Not running on Vercel. If your developing with localhost please add the `urlToOverrideWhenRunningLocalhost` flag to the queue options'
 interface Options {
   urlToOverrideWhenRunningLocalhost: string
   retries: number
 }
-
 interface NextApiRequest {
   body: any
   headers: IncomingHttpHeaders
 }
-
 interface NextApiResponse {
   setHeader(key: string, value: string): void
   status(code: number): void
   send(body: string): void
 }
 
-// type NextApiHandler = (
-//   req: NextApiRequest,
-//   res: NextApiResponse,
-//   enqueue: () => Promise<QueueResponse>
-// ) => void | Promise<void>;
-
-// export type QueueHandler<T = any> = (job: T) => Promise<void>;
-export type QueueHandler<T = any> = (
+export type QueueHandler = (
   req: NextApiRequest,
   res: NextApiResponse
-) => Promise<T>
+) => Promise<void>
 
-export async function Queue(
+export function Queue(
   nameOfQueue: string,
   route: string,
   handler: QueueHandler,
@@ -40,21 +32,20 @@ export async function Queue(
 ) {
   const queueClient = new QueueClient()
 
-  const queue = await queueClient.createOrGetQueue(nameOfQueue)
-  console.log('Response from create: ', queue)
-
-  async function nextApiHandler(req: NextApiRequest, res: NextApiResponse) {
-    console.log('In next api handler', req)
-    return await handler(req, res)
+  const queue = queueClient.createOrGetQueue(nameOfQueue)
+  async function nextApiHandler(
+    req: NextApiRequest,
+    res: NextApiResponse
+  ): Promise<void> {
+    return handler(req, res)
   }
 
   nextApiHandler.enqueue = async (method: HttpMethod) => {
+    await queue
     if (!IS_VERCEL) {
       console.log('Not running on Vercel. Probably on localhost')
       if (!options.urlToOverrideWhenRunningLocalhost) {
-        throw new Error(
-          'Not running on Vercel. If your developing with localhost please add the `urlToOverrideWhenRunningLocalhost` flag to the queue options'
-        )
+        throw new Error(LOCAL_DEVELOPMENT_ERROR)
       }
       return queueClient.enqueue({
         method,

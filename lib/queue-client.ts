@@ -65,7 +65,6 @@ export class QueueClient {
   }
 
   createOrGetQueue = async (nameOfQueue: string): Promise<Queue> => {
-    console.log("Start creating queue '" + nameOfQueue + "'")
     this.queueName = nameOfQueue
     const createOrGetQueueApi = axios.create({
       baseURL: `https://zyceqow9zi.execute-api.us-east-2.amazonaws.com/prod/queues/${this.queueName}`,
@@ -87,7 +86,6 @@ export class QueueClient {
       this.queueId = createOrGetQueue.id
       return createOrGetQueue
     } catch (e) {
-      console.error('Error (createOrGetQueue): ', e)
       throw new Error('Error creating queue')
     }
   }
@@ -116,7 +114,6 @@ export class QueueClient {
       const response = await client(config)
       return response.data
     } catch (e) {
-      console.error('Error (enqueue): ', e)
       throw new Error('could not enqueue job')
     }
   }
