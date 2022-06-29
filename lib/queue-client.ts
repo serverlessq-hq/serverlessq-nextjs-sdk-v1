@@ -7,12 +7,12 @@ const OPTIONS_ERROR_MESSAGE = 'required options are missing'
 
 const NODE_ENV = process.env.NODE_ENV || 'development'
 
-export type QueueResponse = {
+type QueueResponse = {
   requestId: string
   message: string
 }
 
-export type Queue = {
+type Queue = {
   queueType: string
   userId: string
   updatedAt: string
@@ -28,17 +28,6 @@ export type Queue = {
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 
-const client = axios.create({
-  baseURL:
-    NODE_ENV === 'development'
-      ? 'https://zyceqow9zi.execute-api.us-east-2.amazonaws.com/prod'
-      : 'https://api.serverlessq.com',
-  timeout: 5000,
-  headers: {
-    Accept: 'application/json'
-  }
-})
-
 /**
  * @param target - the target of the message queue
  * @param method - http method executed against the target
@@ -50,7 +39,18 @@ export type EnqueueOptionsWithQueueId = {
   queueId: string
 }
 
-export type EnqueueOptions = Omit<EnqueueOptionsWithQueueId, 'queueId'>
+type EnqueueOptions = Omit<EnqueueOptionsWithQueueId, 'queueId'>
+
+const client = axios.create({
+  baseURL:
+    NODE_ENV === 'development'
+      ? 'https://zyceqow9zi.execute-api.us-east-2.amazonaws.com/prod'
+      : 'https://api.serverlessq.com',
+  timeout: 5000,
+  headers: {
+    Accept: 'application/json'
+  }
+})
 
 export class QueueClient {
   private apiKey: string | undefined

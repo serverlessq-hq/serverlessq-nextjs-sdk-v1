@@ -1,8 +1,4 @@
-import {
-  enqueue,
-  EnqueueOptions,
-  EnqueueOptionsWithQueueId
-} from './queue-client.js'
-import { Queue } from './queue-handler-next.js'
+import { enqueue, EnqueueOptionsWithQueueId } from './queue-client.js'
+import { Queue, EnqueueOptions } from './queue-handler-next.js'
 
-export { Queue, enqueue, type EnqueueOptions, type EnqueueOptionsWithQueueId }
+export { Queue, enqueue, type EnqueueOptionsWithQueueId, type EnqueueOptions }

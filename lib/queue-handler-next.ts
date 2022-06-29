@@ -19,10 +19,11 @@ interface NextApiResponse {
   send(body: string): void
 }
 
-export type QueueHandler = (
-  req: NextApiRequest,
-  res: NextApiResponse
-) => Promise<void>
+type QueueHandler = (req: NextApiRequest, res: NextApiResponse) => Promise<void>
+
+export interface EnqueueOptions {
+  method: HttpMethod
+}
 
 export function Queue(
   nameOfQueue: string,
@@ -40,7 +41,8 @@ export function Queue(
     return handler(req, res)
   }
 
-  nextApiHandler.enqueue = async (method: HttpMethod) => {
+  nextApiHandler.enqueue = async (enqueueOptions: EnqueueOptions) => {
+    const { method } = enqueueOptions
     await queue
     if (!IS_VERCEL) {
       console.log('Not running on Vercel. Probably on localhost')
