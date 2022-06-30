@@ -1,5 +1,6 @@
 import { IncomingHttpHeaders } from 'http'
 import { HttpMethod, QueueClient } from './queue-client'
+import { removeLeadingAndTrailingSlashes } from './utils/sanitize-input'
 
 const VERCEL_URL = process.env.VERCEL_URL
 const IS_VERCEL = process.env.VERCEL
@@ -54,9 +55,10 @@ export function Queue(
         target: options.urlToOverrideWhenRunningLocalhost
       })
     } else {
+      const sanitizedRoute = removeLeadingAndTrailingSlashes(route)
       return queueClient.enqueue({
         method,
-        target: `https://${VERCEL_URL}/${route}`
+        target: `https://${VERCEL_URL}/${sanitizedRoute}`
       })
     }
   }
