@@ -2,4 +2,8 @@ const removeLeadingAndTrailingSlashes = (path: string): string => {
   return path.replace(/^\/+/g, '').replace(/\/+$/, '')
 }
 
-export { removeLeadingAndTrailingSlashes }
+const checkStringForSlashes = (str: string): boolean => {
+  return str.includes('/')
+}
+
+export { removeLeadingAndTrailingSlashes, checkStringForSlashes }

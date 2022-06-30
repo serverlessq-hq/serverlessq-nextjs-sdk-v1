@@ -1,11 +1,10 @@
 import axios, { AxiosRequestConfig } from 'axios'
+import { checkStringForSlashes } from './utils/sanitize-input'
 
 const ENV_ERROR_MESSAGE =
   'Please set the environment variable SERVERLESSQ_API_TOKEN'
 
 const OPTIONS_ERROR_MESSAGE = 'required options are missing'
-
-const NODE_ENV = process.env.NODE_ENV || 'development'
 
 type QueueResponse = {
   requestId: string
@@ -42,10 +41,7 @@ export type EnqueueOptionsWithQueueId = {
 type EnqueueOptions = Omit<EnqueueOptionsWithQueueId, 'queueId'>
 
 const client = axios.create({
-  baseURL:
-    NODE_ENV === 'development'
-      ? 'https://zyceqow9zi.execute-api.us-east-2.amazonaws.com/prod'
-      : 'https://api.serverlessq.com',
+  baseURL: 'https://api.serverlessq.com',
   timeout: 5000,
   headers: {
     Accept: 'application/json'
@@ -66,8 +62,13 @@ export class QueueClient {
 
   createOrGetQueue = async (nameOfQueue: string): Promise<Queue> => {
     this.queueName = nameOfQueue
+
+    if (checkStringForSlashes(nameOfQueue)) {
+      throw new Error('Queue name cannot contain slashes')
+    }
+
     const createOrGetQueueApi = axios.create({
-      baseURL: `https://zyceqow9zi.execute-api.us-east-2.amazonaws.com/prod/queues/${this.queueName}`,
+      baseURL: `https://api.serverlessq.com/queues/${this.queueName}`,
       timeout: 5000,
       headers: {
         Accept: 'application/json'
