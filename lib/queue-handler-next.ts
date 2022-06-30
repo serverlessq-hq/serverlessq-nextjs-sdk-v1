@@ -1,6 +1,6 @@
 import { IncomingHttpHeaders } from 'http'
-import { HttpMethod, QueueClient } from './queue-client'
-import { removeLeadingAndTrailingSlashes } from './utils/sanitize-input'
+import { HttpMethod, QueueClient } from './queue-client.js'
+import { removeLeadingAndTrailingSlashes } from './utils/sanitize-input.js'
 
 const VERCEL_URL = process.env.VERCEL_URL
 const IS_VERCEL = process.env.VERCEL
