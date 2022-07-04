@@ -1,5 +1,5 @@
-import { IncomingHttpHeaders } from 'http'
 import { HttpMethod, QueueClient } from './queue-client.js'
+import { NextApiRequest, NextApiResponse } from './types/next.js'
 import { removeLeadingAndTrailingSlashes } from './utils/sanitize-input.js'
 
 const VERCEL_URL = process.env.VERCEL_URL
@@ -10,16 +10,6 @@ interface Options {
   urlToOverrideWhenRunningLocalhost: string
   retries: number
 }
-interface NextApiRequest {
-  body: any
-  headers: IncomingHttpHeaders
-}
-interface NextApiResponse {
-  setHeader(key: string, value: string): void
-  status(code: number): void
-  send(body: string): void
-}
-
 type QueueHandler = (req: NextApiRequest, res: NextApiResponse) => Promise<void>
 
 export interface EnqueueOptions {
