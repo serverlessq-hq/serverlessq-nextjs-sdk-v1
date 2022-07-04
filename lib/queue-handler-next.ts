@@ -33,6 +33,7 @@ export function Queue(
   options: Partial<Options>
 ) {
   const queueClient = new QueueClient()
+  let queueInitDone = false
   async function nextApiHandler(
     req: NextApiRequest,
     res: NextApiResponse
@@ -41,7 +42,10 @@ export function Queue(
   }
 
   nextApiHandler.enqueue = async (enqueueOptions: EnqueueOptions) => {
-    await queueClient.createOrGetQueue(nameOfQueue)
+    if (!queueInitDone) {
+      await queueClient.createOrGetQueue(nameOfQueue)
+      queueInitDone = true
+    }
 
     const { method } = enqueueOptions
     if (!IS_VERCEL) {
