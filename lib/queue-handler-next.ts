@@ -33,8 +33,6 @@ export function Queue(
   options: Partial<Options>
 ) {
   const queueClient = new QueueClient()
-
-  const queue = queueClient.createOrGetQueue(nameOfQueue)
   async function nextApiHandler(
     req: NextApiRequest,
     res: NextApiResponse
@@ -43,8 +41,9 @@ export function Queue(
   }
 
   nextApiHandler.enqueue = async (enqueueOptions: EnqueueOptions) => {
+    await queueClient.createOrGetQueue(nameOfQueue)
+
     const { method } = enqueueOptions
-    await queue
     if (!IS_VERCEL) {
       console.log('Not running on Vercel. Probably on localhost')
       if (!options.urlToOverrideWhenRunningLocalhost) {
