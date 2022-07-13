@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios'
-import { checkStringForSlashes } from './utils/sanitize-input.js'
+import { checkStringForSlashes } from '../utils/sanitize-input.js'
 
 const ENV_ERROR_MESSAGE =
   'Please set the environment variable SERVERLESSQ_API_TOKEN'
