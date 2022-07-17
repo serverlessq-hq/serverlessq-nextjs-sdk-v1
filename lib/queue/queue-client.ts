@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios'
+import { HttpMethod } from '../types'
 import { checkStringForSlashes } from '../utils/sanitize-input.js'
 
 const ENV_ERROR_MESSAGE =
@@ -24,9 +25,6 @@ type Queue = {
   name: string
   metaData: { retries: number }
 }
-
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
-
 /**
  * @param target - the target of the message queue
  * @param method - http method executed against the target
@@ -36,6 +34,7 @@ export type EnqueueOptionsWithQueueId = {
   target: string
   method: HttpMethod
   queueId: string
+  body?: { [key: string]: any }
 }
 
 type EnqueueOptions = Omit<EnqueueOptionsWithQueueId, 'queueId'>
@@ -95,7 +94,7 @@ export class QueueClient {
    * send a message to the `Queue`
    */
   enqueue = async (options: EnqueueOptions): Promise<QueueResponse> => {
-    const { method, target } = options
+    const { method, target, body } = options
 
     this.validateOptionsOrThrow(options)
 
@@ -105,6 +104,7 @@ export class QueueClient {
         target,
         id: this.queueId
       },
+      ...(body && { data: { ...body } }),
       headers: {
         Accept: 'application/json',
         'x-api-key': this.apiKey as string
@@ -131,7 +131,7 @@ export class QueueClient {
  * @param options - required options to enqueue a message
  */
 export const enqueue = async (options: EnqueueOptionsWithQueueId) => {
-  const { method, target, queueId } = options
+  const { method, target, queueId, body } = options
   const apiKey = process.env.SERVERLESSQ_API_TOKEN
 
   if (!options.target || !options.method || !options.queueId) {
@@ -148,6 +148,7 @@ export const enqueue = async (options: EnqueueOptionsWithQueueId) => {
       target,
       id: queueId
     },
+    ...(body && { data: { ...body } }),
     headers: {
       Accept: 'application/json',
       'x-api-key': apiKey as string
