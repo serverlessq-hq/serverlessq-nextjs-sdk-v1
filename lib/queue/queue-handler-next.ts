@@ -1,5 +1,5 @@
-import { HttpMethod, QueueClient } from './queue-client.js'
-import { NextApiRequest, NextApiResponse } from '../types/next.js'
+import { QueueClient } from './queue-client.js'
+import { NextApiRequest, NextApiResponse, HttpMethod } from '../types'
 import { removeLeadingAndTrailingSlashes } from '../utils/sanitize-input.js'
 
 const VERCEL_URL = process.env.VERCEL_URL
@@ -14,6 +14,7 @@ type QueueHandler = (req: NextApiRequest, res: NextApiResponse) => Promise<void>
 
 export interface EnqueueOptions {
   method: HttpMethod
+  body?: { [key: string]: any }
 }
 
 export function Queue(
@@ -37,7 +38,7 @@ export function Queue(
       queueInitDone = true
     }
 
-    const { method } = enqueueOptions
+    const { method, body } = enqueueOptions
     if (!IS_VERCEL) {
       console.log('Not running on Vercel. Probably on localhost')
       if (!options.urlToOverrideWhenRunningLocalhost) {
@@ -45,13 +46,15 @@ export function Queue(
       }
       return queueClient.enqueue({
         method,
-        target: options.urlToOverrideWhenRunningLocalhost
+        target: options.urlToOverrideWhenRunningLocalhost,
+        body
       })
     } else {
       const sanitizedRoute = removeLeadingAndTrailingSlashes(route)
       return queueClient.enqueue({
         method,
-        target: `https://${VERCEL_URL}/${sanitizedRoute}`
+        target: `https://${VERCEL_URL}/${sanitizedRoute}`,
+        body
       })
     }
   }
