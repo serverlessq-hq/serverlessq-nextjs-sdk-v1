@@ -3,6 +3,6 @@ import {
   enqueue,
   EnqueueOptionsWithQueueId,
   EnqueueOptions
-} from './queue'
+} from './queue/index.js'
 
 export { Queue, enqueue, EnqueueOptionsWithQueueId, EnqueueOptions }

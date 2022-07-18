@@ -1,5 +1,5 @@
 import { QueueClient } from './queue-client.js'
-import { NextApiRequest, NextApiResponse, HttpMethod } from '../types'
+import { NextApiRequest, NextApiResponse, HttpMethod } from '../types/index.js'
 import { removeLeadingAndTrailingSlashes } from '../utils/sanitize-input.js'
 
 const VERCEL_URL = process.env.VERCEL_URL

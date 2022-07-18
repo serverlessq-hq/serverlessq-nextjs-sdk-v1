@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios'
-import { HttpMethod } from '../types'
+import { HttpMethod } from '../types/index.js'
 import { checkStringForSlashes } from '../utils/sanitize-input.js'
 
 const ENV_ERROR_MESSAGE =
