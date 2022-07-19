@@ -1,11 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios'
 import { HttpMethod } from '../types/index.js'
+import { ENV_ERROR_MESSAGE, OPTIONS_ERROR_MESSAGE } from '../utils/consts.js'
 import { checkStringForSlashes } from '../utils/sanitize-input.js'
-
-const ENV_ERROR_MESSAGE =
-  'Please set the environment variable SERVERLESSQ_API_TOKEN'
-
-const OPTIONS_ERROR_MESSAGE = 'required options are missing'
 
 type QueueResponse = {
   requestId: string
@@ -86,6 +82,7 @@ export class QueueClient {
       this.queueId = createOrGetQueue.id
       return createOrGetQueue
     } catch (e) {
+      console.error(e)
       throw new Error('Error creating queue')
     }
   }
@@ -158,6 +155,7 @@ export const enqueue = async (options: EnqueueOptionsWithQueueId) => {
     const response = await client(config)
     return response.data
   } catch (e) {
+    console.error(e)
     throw new Error('could not enqueue job')
   }
 }

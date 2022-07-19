@@ -1,5 +1,10 @@
 import { QueueClient } from './queue-client.js'
-import { NextApiRequest, NextApiResponse, HttpMethod } from '../types/index.js'
+import {
+  NextApiRequest,
+  NextApiResponse,
+  HttpMethod,
+  Handler
+} from '../types/index.js'
 import { removeLeadingAndTrailingSlashes } from '../utils/sanitize-input.js'
 
 const VERCEL_URL = process.env.VERCEL_URL
@@ -10,8 +15,6 @@ interface Options {
   urlToOverrideWhenRunningLocalhost: string
   retries: number
 }
-type QueueHandler = (req: NextApiRequest, res: NextApiResponse) => Promise<void>
-
 export interface EnqueueOptions {
   method: HttpMethod
   body?: { [key: string]: any }
@@ -20,7 +23,7 @@ export interface EnqueueOptions {
 export function Queue(
   nameOfQueue: string,
   route: string,
-  handler: QueueHandler,
+  handler: Handler,
   options: Partial<Options>
 ) {
   const queueClient = new QueueClient()
