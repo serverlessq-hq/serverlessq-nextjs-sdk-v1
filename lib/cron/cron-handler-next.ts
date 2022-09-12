@@ -5,6 +5,12 @@ import {
   HttpMethod,
   Handler
 } from '../types/index.js'
+import {
+  VERCEL_URL,
+  IS_VERCEL,
+  LOCAL_DEVELOPMENT_ERROR
+} from '../utils/constants.js'
+import { removeLeadingAndTrailingSlashes } from '../utils/sanitize-input.js'
 
 export interface CronOptions {
   nameOfCron: string
@@ -14,7 +20,12 @@ export interface CronOptions {
   retries?: number
 }
 
-export function Cron(name: string, handler: Handler) {
+export function Cron(
+  name: string,
+  route: string,
+  handler: Handler,
+  cronOptions?: { urlToOverrideWhenRunningLocalhost: string }
+) {
   const cronClient = new CronClient()
   let cron: Cron
 
@@ -26,9 +37,24 @@ export function Cron(name: string, handler: Handler) {
   }
 
   nextApiHandler.createOrUpdate = async (
-    options: Omit<CronOptions, 'nameOfCron'>
+    options: Omit<CronOptions, 'nameOfCron' | 'target'>
   ) => {
-    cron = await cronClient.createOrUpdate({ ...options, nameOfCron: name })
+    let target: string
+    if (!IS_VERCEL) {
+      console.log('Not running on Vercel. Probably on localhost')
+      if (!cronOptions?.urlToOverrideWhenRunningLocalhost) {
+        throw new Error(LOCAL_DEVELOPMENT_ERROR)
+      }
+      target = cronOptions?.urlToOverrideWhenRunningLocalhost
+    } else {
+      const sanitizedRoute = removeLeadingAndTrailingSlashes(route)
+      target = `https://${VERCEL_URL}/${sanitizedRoute}`
+    }
+    cron = await cronClient.createOrUpdate({
+      ...options,
+      nameOfCron: name,
+      target
+    })
     return cron
   }
 
