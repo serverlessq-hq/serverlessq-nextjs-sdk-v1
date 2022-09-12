@@ -1,9 +1,7 @@
-import axios, { AxiosRequestConfig } from 'axios'
+import { AxiosRequestConfig } from 'axios'
 import { HttpMethod } from '../types/index.js'
 import { checkStringForSlashes } from '../utils/sanitize-input.js'
-
-const ENV_ERROR_MESSAGE =
-  'Please set the environment variable SERVERLESSQ_API_TOKEN'
+import axiosInstance from '../utils/axios.js'
 
 const OPTIONS_ERROR_MESSAGE = 'required options are missing'
 
@@ -39,25 +37,11 @@ export type EnqueueOptionsWithQueueId = {
 
 type EnqueueOptions = Omit<EnqueueOptionsWithQueueId, 'queueId'>
 
-const client = axios.create({
-  baseURL: 'https://api.serverlessq.com',
-  timeout: 5000,
-  headers: {
-    Accept: 'application/json'
-  }
-})
-
 export class QueueClient {
-  private apiKey: string | undefined
   private queueName: string | undefined
   private queueId: string | undefined
 
-  constructor() {
-    this.apiKey = process.env.SERVERLESSQ_API_TOKEN
-    if (!this.apiKey) {
-      throw new Error(ENV_ERROR_MESSAGE)
-    }
-  }
+  constructor() {}
 
   createOrGetQueue = async (nameOfQueue: string): Promise<Queue> => {
     this.queueName = nameOfQueue
@@ -66,26 +50,14 @@ export class QueueClient {
       throw new Error('Queue name cannot contain slashes')
     }
 
-    const createOrGetQueueApi = axios.create({
-      baseURL: `https://api.serverlessq.com/queues/${this.queueName}`,
-      timeout: 5000,
-      headers: {
-        Accept: 'application/json'
-      }
-    })
-
-    const config: AxiosRequestConfig = {
-      method: 'POST',
-      headers: {
-        'x-api-key': this.apiKey as string
-      }
-    }
-
     try {
-      const createOrGetQueue = (await createOrGetQueueApi(config)).data as Queue
-      this.queueId = createOrGetQueue.id
-      return createOrGetQueue
+      const createOrUpdateQueue = (
+        await axiosInstance.post(`/queues/${this.queueName}`)
+      ).data as Queue
+      this.queueId = createOrUpdateQueue.id
+      return createOrUpdateQueue
     } catch (e) {
+      console.log(e)
       throw new Error('Error creating queue')
     }
   }
@@ -104,16 +76,12 @@ export class QueueClient {
         target,
         id: this.queueId
       },
-      ...(body && { data: { ...body } }),
-      headers: {
-        Accept: 'application/json',
-        'x-api-key': this.apiKey as string
-      }
+      ...(body && { data: { ...body } })
     }
 
     try {
-      const response = await client(config)
-      return response.data
+      const response = await axiosInstance.request(config)
+      return response.data as QueueResponse
     } catch (e) {
       throw new Error('could not enqueue job')
     }
@@ -132,14 +100,9 @@ export class QueueClient {
  */
 export const enqueue = async (options: EnqueueOptionsWithQueueId) => {
   const { method, target, queueId, body } = options
-  const apiKey = process.env.SERVERLESSQ_API_TOKEN
 
   if (!options.target || !options.method || !options.queueId) {
     throw new Error(OPTIONS_ERROR_MESSAGE)
-  }
-
-  if (!apiKey) {
-    throw new Error(ENV_ERROR_MESSAGE)
   }
 
   const config: AxiosRequestConfig = {
@@ -148,14 +111,10 @@ export const enqueue = async (options: EnqueueOptionsWithQueueId) => {
       target,
       id: queueId
     },
-    ...(body && { data: { ...body } }),
-    headers: {
-      Accept: 'application/json',
-      'x-api-key': apiKey as string
-    }
+    ...(body && { data: { ...body } })
   }
   try {
-    const response = await client(config)
+    const response = await axiosInstance.request(config)
     return response.data
   } catch (e) {
     throw new Error('could not enqueue job')
