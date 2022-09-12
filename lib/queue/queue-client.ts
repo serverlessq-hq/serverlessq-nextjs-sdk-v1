@@ -2,8 +2,10 @@ import { AxiosRequestConfig } from 'axios'
 import { HttpMethod } from '../types/index.js'
 import { checkStringForSlashes } from '../utils/sanitize-input.js'
 import axiosInstance from '../utils/axios.js'
-
-const OPTIONS_ERROR_MESSAGE = 'required options are missing'
+import {
+  OPTIONS_ERROR_MESSAGE,
+  SLASH_ERROR_MESSAGE
+} from '../utils/constants.js'
 
 type QueueResponse = {
   requestId: string
@@ -43,19 +45,18 @@ export class QueueClient {
 
   constructor() {}
 
-  createOrGetQueue = async (nameOfQueue: string): Promise<Queue> => {
+  createOrUpdate = async (nameOfQueue: string): Promise<Queue> => {
     this.queueName = nameOfQueue
 
     if (checkStringForSlashes(nameOfQueue)) {
-      throw new Error('Queue name cannot contain slashes')
+      throw new Error(SLASH_ERROR_MESSAGE)
     }
 
     try {
-      const createOrUpdateQueue = (
-        await axiosInstance.post(`/queues/${this.queueName}`)
-      ).data as Queue
-      this.queueId = createOrUpdateQueue.id
-      return createOrUpdateQueue
+      const queue = (await axiosInstance.post(`/queues/${this.queueName}`))
+        .data as Queue
+      this.queueId = queue.id
+      return queue
     } catch (e) {
       console.log(e)
       throw new Error('Error creating queue')

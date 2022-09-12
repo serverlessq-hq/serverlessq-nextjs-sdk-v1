@@ -5,4 +5,13 @@ import {
   EnqueueOptions
 } from './queue/index.js'
 
-export { Queue, enqueue, EnqueueOptionsWithQueueId, EnqueueOptions }
+import { Cron, CronOptions } from './cron/index.js'
+
+export {
+  Queue,
+  enqueue,
+  EnqueueOptionsWithQueueId,
+  EnqueueOptions,
+  Cron,
+  CronOptions
+}

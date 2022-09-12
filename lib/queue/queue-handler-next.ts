@@ -34,7 +34,7 @@ export function Queue(
 
   nextApiHandler.enqueue = async (enqueueOptions: EnqueueOptions) => {
     if (!queueInitDone) {
-      await queueClient.createOrGetQueue(nameOfQueue)
+      await queueClient.createOrUpdate(nameOfQueue)
       queueInitDone = true
     }
 
