@@ -47,6 +47,19 @@ export class CronClient {
     }
   }
 
+  // TODO backend endpoint for this is not yet implemented
+  getNextExecution = async () => {
+    if (!this.cronName) {
+      throw new Error('No cron name set')
+    }
+    try {
+      return (await axiosInstance.get(`/crons/${this.cronName}`)).data
+    } catch (e) {
+      console.error(e)
+      throw new Error('Error getting next cron execution')
+    }
+  }
+
   private validateOptionsOrThrow = (options: CronOptions) => {
     if (!options.target || !options.method || !options.expression) {
       throw new Error(OPTIONS_ERROR_MESSAGE)

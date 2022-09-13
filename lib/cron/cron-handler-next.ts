@@ -29,8 +29,6 @@ export function Cron(
   }
 ) {
   const cronClient = new CronClient()
-  let cron: Cron
-
   async function nextApiHandler(
     req: NextApiRequest,
     res: NextApiResponse
@@ -57,12 +55,12 @@ export function Cron(
         retries: options?.retries,
         target
       })
-      .then(newCron => (cron = newCron))
+      .then(console.log)
       .catch(console.error)
   }
 
-  nextApiHandler.getCurrentExecution = async () => {
-    return cron
+  nextApiHandler.getNextExecution = async () => {
+    return await cronClient.getNextExecution()
   }
 
   return nextApiHandler
