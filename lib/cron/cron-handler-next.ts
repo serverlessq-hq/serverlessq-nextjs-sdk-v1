@@ -41,7 +41,6 @@ export function Cron(
   ) => {
     let target: string
     if (!IS_VERCEL) {
-      console.log('Not running on Vercel. Probably on localhost')
       if (!cronOptions?.urlToOverrideWhenRunningLocalhost) {
         throw new Error(LOCAL_DEVELOPMENT_ERROR)
       }

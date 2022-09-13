@@ -40,7 +40,6 @@ export function Queue(
 
     const { method, body } = enqueueOptions
     if (!IS_VERCEL) {
-      console.log('Not running on Vercel. Probably on localhost')
       if (!options.urlToOverrideWhenRunningLocalhost) {
         throw new Error(LOCAL_DEVELOPMENT_ERROR)
       }
