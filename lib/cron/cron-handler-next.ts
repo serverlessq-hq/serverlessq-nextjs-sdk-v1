@@ -57,8 +57,6 @@ export function Cron(
     return cron
   }
 
-  nextApiHandler.delete = async () => {}
-
   nextApiHandler.getCurrentExecution = async () => {
     return cron
   }
