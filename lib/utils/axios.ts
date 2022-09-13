@@ -4,7 +4,7 @@ const API_KEY = process.env.SERVERLESSQ_API_TOKEN
 const ENV_ERROR_MESSAGE =
   'Please set the environment variable SERVERLESSQ_API_TOKEN'
 
-const nodeEnvToURL = {
+export const nodeEnvToURL = {
   development: 'https://zyceqow9zi.execute-api.us-east-2.amazonaws.com/prod',
   production: 'https://api.serverlessq.com'
 }
