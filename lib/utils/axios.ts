@@ -9,16 +9,19 @@ export const nodeEnvToURL = {
   production: 'https://api.serverlessq.com'
 }
 
-if (!API_KEY) {
-  throw new Error(ENV_ERROR_MESSAGE)
-}
-
 const instance = axios.create({
-  baseURL: nodeEnvToURL.production,
+  baseURL: nodeEnvToURL.development,
   timeout: 5000
 })
 
-instance.defaults.headers.common['x-api-key'] = API_KEY
+instance.interceptors.request.use(config => {
+  if (!API_KEY) {
+    throw new Error(ENV_ERROR_MESSAGE)
+  }
+
+  config.headers!['x-api-key'] = API_KEY
+  return config
+})
 instance.defaults.headers.common['Accept'] = 'application/json'
 instance.defaults.headers.post['Content-Type'] = 'application/json'
 

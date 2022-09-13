@@ -24,7 +24,9 @@ export function Cron(
   name: string,
   route: string,
   handler: Handler,
-  cronOptions?: { urlToOverrideWhenRunningLocalhost: string }
+  options: Omit<CronOptions, 'nameOfCron' | 'target'> & {
+    urlToOverrideWhenRunningLocalhost?: string
+  }
 ) {
   const cronClient = new CronClient()
   let cron: Cron
@@ -36,25 +38,27 @@ export function Cron(
     return handler(req, res)
   }
 
-  nextApiHandler.createOrUpdate = async (
-    options: Omit<CronOptions, 'nameOfCron' | 'target'>
-  ) => {
+  nextApiHandler.init = () => {
     let target: string
     if (!IS_VERCEL) {
-      if (!cronOptions?.urlToOverrideWhenRunningLocalhost) {
+      if (!options?.urlToOverrideWhenRunningLocalhost) {
         throw new Error(LOCAL_DEVELOPMENT_ERROR)
       }
-      target = cronOptions?.urlToOverrideWhenRunningLocalhost
+      target = options?.urlToOverrideWhenRunningLocalhost
     } else {
       const sanitizedRoute = removeLeadingAndTrailingSlashes(route)
       target = `https://${VERCEL_URL}/${sanitizedRoute}`
     }
-    cron = await cronClient.createOrUpdate({
-      ...options,
-      nameOfCron: name,
-      target
-    })
-    return cron
+    cronClient
+      .createOrUpdate({
+        expression: options?.expression,
+        method: options?.method,
+        nameOfCron: name,
+        retries: options?.retries,
+        target
+      })
+      .then(newCron => (cron = newCron))
+      .catch(console.error)
   }
 
   nextApiHandler.getCurrentExecution = async () => {
