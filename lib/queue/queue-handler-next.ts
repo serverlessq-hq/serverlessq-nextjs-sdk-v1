@@ -1,13 +1,13 @@
 import { QueueClient } from './queue-client.js'
 import { NextApiRequest, NextApiResponse, HttpMethod } from '../types/index.js'
 import { removeLeadingAndTrailingSlashes } from '../utils/sanitize-input.js'
-
-const VERCEL_URL = process.env.VERCEL_URL
-const IS_VERCEL = process.env.VERCEL
-const LOCAL_DEVELOPMENT_ERROR =
-  'Not running on Vercel. If your developing with localhost please add the `urlToOverrideWhenRunningLocalhost` flag to the queue options'
+import {
+  VERCEL_URL,
+  IS_VERCEL,
+  LOCAL_DEVELOPMENT_ERROR
+} from '../utils/constants.js'
 interface Options {
-  urlToOverrideWhenRunningLocalhost: string
+  urlToOverrideWhenRunningLocalhost?: string
   retries: number
 }
 type QueueHandler = (req: NextApiRequest, res: NextApiResponse) => Promise<void>
@@ -21,7 +21,7 @@ export function Queue(
   nameOfQueue: string,
   route: string,
   handler: QueueHandler,
-  options: Partial<Options>
+  options: Options
 ) {
   const queueClient = new QueueClient()
   let queueInitDone = false
@@ -34,7 +34,9 @@ export function Queue(
 
   nextApiHandler.enqueue = async (enqueueOptions: EnqueueOptions) => {
     if (!queueInitDone) {
-      await queueClient.createOrGetQueue(nameOfQueue)
+      await queueClient.createOrUpdateQueue(nameOfQueue, {
+        retries: options.retries
+      })
       queueInitDone = true
     }
 

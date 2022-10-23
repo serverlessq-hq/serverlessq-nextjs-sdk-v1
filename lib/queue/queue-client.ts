@@ -1,11 +1,8 @@
-import axios, { AxiosRequestConfig } from 'axios'
 import { HttpMethod } from '../types/index.js'
 import { checkStringForSlashes } from '../utils/sanitize-input.js'
-
-const ENV_ERROR_MESSAGE =
-  'Please set the environment variable SERVERLESSQ_API_TOKEN'
-
-const OPTIONS_ERROR_MESSAGE = 'required options are missing'
+import { OPTIONS_ERROR_MESSAGE } from '../utils/constants.js'
+import axiosInstance, { createError } from '../utils/axios.js'
+import { AxiosRequestConfig } from 'axios'
 
 type QueueResponse = {
   requestId: string
@@ -38,55 +35,28 @@ export type EnqueueOptionsWithQueueId = {
 }
 
 type EnqueueOptions = Omit<EnqueueOptionsWithQueueId, 'queueId'>
-
-const client = axios.create({
-  baseURL: 'https://api.serverlessq.com',
-  timeout: 5000,
-  headers: {
-    Accept: 'application/json'
-  }
-})
-
 export class QueueClient {
-  private apiKey: string | undefined
   private queueName: string | undefined
   private queueId: string | undefined
 
-  constructor() {
-    this.apiKey = process.env.SERVERLESSQ_API_TOKEN
-    if (!this.apiKey) {
-      throw new Error(ENV_ERROR_MESSAGE)
-    }
-  }
-
-  createOrGetQueue = async (nameOfQueue: string): Promise<Queue> => {
+  createOrUpdateQueue = async (
+    nameOfQueue: string,
+    options: { retries: number }
+  ): Promise<Queue> => {
     this.queueName = nameOfQueue
 
     if (checkStringForSlashes(nameOfQueue)) {
       throw new Error('Queue name cannot contain slashes')
     }
 
-    const createOrGetQueueApi = axios.create({
-      baseURL: `https://api.serverlessq.com/queues/${this.queueName}`,
-      timeout: 5000,
-      headers: {
-        Accept: 'application/json'
-      }
-    })
-
-    const config: AxiosRequestConfig = {
-      method: 'POST',
-      headers: {
-        'x-api-key': this.apiKey as string
-      }
-    }
-
     try {
-      const createOrGetQueue = (await createOrGetQueueApi(config)).data as Queue
-      this.queueId = createOrGetQueue.id
-      return createOrGetQueue
-    } catch (e) {
-      throw new Error('Error creating queue')
+      const queue = (
+        await axiosInstance.post(`/queues/${this.queueName}`, options)
+      ).data as Queue
+      this.queueId = queue.id
+      return queue
+    } catch (error) {
+      return createError(error, 'could not create or update queue')
     }
   }
 
@@ -101,21 +71,17 @@ export class QueueClient {
     const config: AxiosRequestConfig = {
       method,
       params: {
-        target,
-        id: this.queueId
+        id: this.queueId,
+        target
       },
-      ...(body && { data: { ...body } }),
-      headers: {
-        Accept: 'application/json',
-        'x-api-key': this.apiKey as string
-      }
+      ...(body && { data: { ...body } })
     }
 
     try {
-      const response = await client(config)
-      return response.data
-    } catch (e) {
-      throw new Error('could not enqueue job')
+      const response = await axiosInstance.request(config)
+      return response.data as QueueResponse
+    } catch (error) {
+      return createError(error, 'could not enqueue')
     }
   }
 
@@ -132,32 +98,23 @@ export class QueueClient {
  */
 export const enqueue = async (options: EnqueueOptionsWithQueueId) => {
   const { method, target, queueId, body } = options
-  const apiKey = process.env.SERVERLESSQ_API_TOKEN
 
   if (!options.target || !options.method || !options.queueId) {
     throw new Error(OPTIONS_ERROR_MESSAGE)
   }
 
-  if (!apiKey) {
-    throw new Error(ENV_ERROR_MESSAGE)
-  }
-
   const config: AxiosRequestConfig = {
     method,
     params: {
-      target,
-      id: queueId
+      id: queueId,
+      target
     },
-    ...(body && { data: { ...body } }),
-    headers: {
-      Accept: 'application/json',
-      'x-api-key': apiKey as string
-    }
+    ...(body && { data: { ...body } })
   }
   try {
-    const response = await client(config)
+    const response = await axiosInstance.request<QueueResponse>(config)
     return response.data
-  } catch (e) {
-    throw new Error('could not enqueue job')
+  } catch (error) {
+    return createError(error, 'could not enqueue')
   }
 }
