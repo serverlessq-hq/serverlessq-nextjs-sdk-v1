@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { ENV_ERROR_MESSAGE } from './constants.js'
+import { ENV_ERROR_MESSAGE } from './constants'
 
 export const createError = (error: Error | any, origin: string) => {
   if (axios.isAxiosError(error)) {

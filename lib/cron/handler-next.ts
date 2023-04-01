@@ -10,7 +10,7 @@ import {
 import { extractApiRoute } from '../utils/sanitize-input'
 
 export interface CronOptions {
-  nameOfCron: string
+  name: string
   target: string
   method: HttpMethod
   expression: string
@@ -18,14 +18,13 @@ export interface CronOptions {
 }
 
 export function Cron(params: {
-  name: string,
   handler: NextApiHandler,
-  options: Omit<CronOptions, 'nameOfCron' | 'target'> & {
+  options: CronOptions & {
     urlToOverrideWhenRunningLocalhost?: string
   }
 }) {
 
-  const { name, handler, options } = params
+  const { handler, options } = params
 
   const cronClient = new CronClient()
 
@@ -35,7 +34,7 @@ export function Cron(params: {
     .createOrUpdate({
       expression: options?.expression,
       method: options?.method,
-      nameOfCron: name,
+      name: options?.name,
       retries: options?.retries,
       target
     })
@@ -59,5 +58,5 @@ const buildCronTarget = (localTarget?: string) => {
     }
     return localTarget
   } 
-  return `https://${VERCEL_URL}/${extractApiRoute(__filename)}`
+  return `https://${VERCEL_URL}/${extractApiRoute(__filename)}` // TODO require base url
 }

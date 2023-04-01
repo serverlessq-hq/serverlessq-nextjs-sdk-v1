@@ -7,7 +7,8 @@ import { extractApiRoute } from '../utils/sanitize-input'
 import { QueueClient } from './client'
 import { NextApiRequest, NextApiResponse, NextApiHandler } from 'next'
 
-interface Options {
+export interface QueueOptions {
+  name: string
   urlToOverrideWhenRunningLocalhost?: string
   retries: number
 }
@@ -17,12 +18,11 @@ export interface EnqueueOptions {
 }
 
 export function Queue(params: {
-  name: string,
   handler: NextApiHandler,
-  options: Options
+  options: QueueOptions
 }) {
   const queueClient = new QueueClient()
-  const { name, handler, options } = params
+  const { handler, options } = params
   let queueInitDone = false
 
   async function nextApiHandler(
@@ -34,7 +34,8 @@ export function Queue(params: {
 
   nextApiHandler.enqueue = async (enqueueOptions: EnqueueOptions) => {
     if (!queueInitDone) {
-      await queueClient.createOrUpdateQueue(name, {
+      // TODO migrate to detector
+      await queueClient.createOrUpdateQueue(options.name, {
         retries: options.retries
       })
       queueInitDone = true

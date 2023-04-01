@@ -1,8 +1,10 @@
 import * as chokidar from "chokidar";
 import * as path from "path";
-import * as fs from "fs";
+import * as fs from "fs/promises";
 import { createHash } from "crypto";
+import { parseFile } from "./utils/parser";
 
+// TODO change to be either cron or queue
 export interface DetectedCronJob {
     route: string;
     schedule: string;
@@ -11,7 +13,7 @@ export interface DetectedCronJob {
     isValid: boolean;
   }
 
-export class CronDetector {
+export class SlsqDetector {
     private watcher: chokidar.FSWatcher;
     private ready = false;
     private cwd = process.cwd();
@@ -24,6 +26,7 @@ export class CronDetector {
       this.watcher = chokidar.watch(["**/api/**/*.{ts,js}"], {
         ignored: ["node_modules", "**/node_modules", ".next/**"],
         cwd: this.cwd,
+        awaitWriteFinish: true // should prevent events from firing twice
       });
 
       this.watcher.on("add", this.on("added"));
@@ -68,12 +71,12 @@ export class CronDetector {
       // HTTP PUT /api/cron/:id
       this.pathToCronJob[filePath] = job;
     }
-  
+
     private on(fileChangeType: "changed" | "deleted" | "added") {
       return async (filePath: string) => {
         const previousJob = this.pathToCronJob[filePath];
   
-        // console.log('filePath', filePath, fileChangeType)
+        console.log('filePath', filePath, fileChangeType)
         if (fileChangeType === "deleted") {
           if (previousJob) {
             await this.onJobRemoved(previousJob, filePath);
@@ -82,14 +85,25 @@ export class CronDetector {
           return;
         }
   
-        const contents = fs.readFileSync(path.join(this.cwd, filePath), "utf-8");
+        const contents = await fs.readFile(path.join(this.cwd, filePath), "utf-8");
+        const ast = parseFile(contents)
+        if(!ast) return;
+
+        if(ast.type === 'cron') {
+            console.log('cron', ast.options)
+        }
+        if(ast.type === 'queue') {
+            console.log('queue', ast.options)
+        }
+        
+
+
         // TODO parse contents to get options
         if(this.hashTable.get(filePath) === this.toHash(contents)) {
             console.log('no change')
             return;
         }
-        // console.log(contents)
-        console.log('isProd', this.isProduction)
+        console.log('isProd', this.isProduction, fileChangeType, filePath)
         // console.log(this.hashTable)
 
         this.hashTable.set(filePath, this.toHash(contents))

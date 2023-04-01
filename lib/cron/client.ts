@@ -18,16 +18,14 @@ export type Cron = {
 }
 
 export class CronClient {
-  private cronName: string | undefined
-
   constructor() {}
 
   createOrUpdate = async (options: CronOptions): Promise<Cron> => {
     this.validateOptionsOrThrow(options)
-    const { method, nameOfCron, target, retries, expression } = options
-    this.cronName = nameOfCron
+    const { method, target, retries, expression, name } = options
 
-    if (checkStringForSlashes(this.cronName)) {
+
+    if (checkStringForSlashes(name)) {
       throw new Error(SLASH_ERROR_MESSAGE)
     }
 
@@ -39,7 +37,7 @@ export class CronClient {
     }
 
     try {
-      return (await axiosInstance.post(`/crons/${this.cronName}`, payload))
+      return (await axiosInstance.post(`/crons/${name}`, payload))
         .data as Cron
     } catch (e) {
       console.error(e)
