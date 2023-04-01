@@ -1,10 +1,10 @@
-import { HttpMethod} from '../types/index.js'
+import { HttpMethod} from '../types'
 import {
   IS_VERCEL,
   LOCAL_DEVELOPMENT_ERROR, VERCEL_URL
-} from '../utils/constants.js'
-import { extractApiRoute } from '../utils/sanitize-input.js'
-import { QueueClient } from './client.js'
+} from '../utils/constants'
+import { extractApiRoute } from '../utils/sanitize-input'
+import { QueueClient } from './client'
 import { NextApiRequest, NextApiResponse, NextApiHandler } from 'next'
 
 interface Options {

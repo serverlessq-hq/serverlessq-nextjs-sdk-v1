@@ -1,13 +1,13 @@
-import { CronClient, Cron } from './client.js'
-import { HttpMethod } from '../types/index.js'
+import { CronClient, Cron } from './client'
+import { HttpMethod } from '../types'
 import { NextApiRequest, NextApiResponse, NextApiHandler } from 'next'
 
 import {
   VERCEL_URL,
   IS_VERCEL,
   LOCAL_DEVELOPMENT_ERROR
-} from '../utils/constants.js'
-import { extractApiRoute } from '../utils/sanitize-input.js'
+} from '../utils/constants'
+import { extractApiRoute } from '../utils/sanitize-input'
 
 export interface CronOptions {
   nameOfCron: string

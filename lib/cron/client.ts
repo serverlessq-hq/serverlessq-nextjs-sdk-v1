@@ -1,10 +1,10 @@
 import {
   OPTIONS_ERROR_MESSAGE,
   SLASH_ERROR_MESSAGE
-} from '../utils/constants.js'
-import { checkStringForSlashes } from '../utils/sanitize-input.js'
-import { CronOptions } from './handler-next.js'
-import axiosInstance from '../utils/axios.js'
+} from '../utils/constants'
+import { checkStringForSlashes } from '../utils/sanitize-input'
+import { CronOptions } from './handler-next'
+import axiosInstance from '../utils/axios'
 
 export type Cron = {
   id: string

@@ -1,7 +1,7 @@
-import { HttpMethod } from '../types/index.js'
-import { checkStringForSlashes } from '../utils/sanitize-input.js'
-import { OPTIONS_ERROR_MESSAGE } from '../utils/constants.js'
-import axiosInstance, { createError } from '../utils/axios.js'
+import { HttpMethod } from '../types'
+import { checkStringForSlashes } from '../utils/sanitize-input'
+import { OPTIONS_ERROR_MESSAGE } from '../utils/constants'
+import axiosInstance, { createError } from '../utils/axios'
 import { AxiosRequestConfig } from 'axios'
 
 type QueueResponse = {
