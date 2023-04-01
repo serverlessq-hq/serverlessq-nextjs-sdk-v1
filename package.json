@@ -1,7 +1,7 @@
 {
   "name": "@serverlessq/nextjs",
   "version": "1.0.9",
-  "description": "The SDK to utilize managed queues by ServerlessQ",
+  "description": "The SDK to utilize managed queues and crons by ServerlessQ",
   "homepage": "https://serverlessq.com",
   "license": "MIT",
   "main": "dist/index.js",
@@ -11,10 +11,8 @@
     "Serverless Queue",
     "Cron Job",
     "Vercel",
-    "Serverless"
-  ],
-  "files": [
-    "dist"
+    "Serverless",
+    "Next.js"
   ],
   "scripts": {
     "build": "tsc",
@@ -62,7 +60,11 @@
     "vitest": "^0.23.2"
   },
   "dependencies": {
-    "axios": "^0.27.2"
+    "axios": "^0.27.2",
+    "chokidar": "^3.5.3"
+  },
+  "peerDependencies": {
+    "next": "^12.1.4 || ^13"
   },
   "directories": {
     "lib": "lib"

@@ -4,7 +4,7 @@ import { ENV_ERROR_MESSAGE } from './constants.js'
 export const createError = (error: Error | any, origin: string) => {
   if (axios.isAxiosError(error)) {
     throw new Error(`${origin} | ${error.message}`)
-  } else throw new Error(origin, { cause: error })
+  } else throw new Error(origin)
 }
 
 const API_KEY = process.env.SERVERLESSQ_API_TOKEN

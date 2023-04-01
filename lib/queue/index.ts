@@ -1,2 +1,2 @@
-export { enqueue, EnqueueOptionsWithQueueId } from './queue-client.js'
-export { Queue, EnqueueOptions } from './queue-handler-next.js'
+export { enqueue, EnqueueOptionsWithQueueId } from './client.js'
+export { Queue, EnqueueOptions } from './handler-next.js'

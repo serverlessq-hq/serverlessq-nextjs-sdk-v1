@@ -1,8 +1,10 @@
-import {
+export {
   Queue,
   enqueue,
   EnqueueOptionsWithQueueId,
   EnqueueOptions
 } from './queue/index.js'
 
-export { Queue, enqueue, EnqueueOptionsWithQueueId, EnqueueOptions }
+export { Cron, CronOptions } from './cron/index.js'
+
+export { withServerlessQ } from './with-serverlessq.js'
