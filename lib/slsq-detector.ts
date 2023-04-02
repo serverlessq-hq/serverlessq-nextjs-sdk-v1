@@ -2,140 +2,102 @@ import * as chokidar from "chokidar";
 import * as path from "path";
 import * as fs from "fs/promises";
 import { createHash } from "crypto";
-import { parseFile } from "./utils/parser";
-
-// TODO change to be either cron or queue
-export interface DetectedCronJob {
-    route: string;
-    schedule: string;
-    timezone: string;
-    framework: string;
-    isValid: boolean;
-  }
+import { parseFile, ParseFileResponse } from "./utils/parser";
 
 export class SlsqDetector {
-    private watcher: chokidar.FSWatcher;
-    private ready = false;
-    private cwd = process.cwd();
-    private hashTable: Map<string, string> = new Map();
+  private watcher: chokidar.FSWatcher;
+  private ready = false;
+  private cwd = process.cwd();
+  private hashTable: Map<string, string> = new Map();
 
-    constructor(
-      private isProduction: boolean
-    ) {
+  constructor(
+    private isProduction: boolean
+  ) {
 
-      this.watcher = chokidar.watch(["**/api/**/*.{ts,js}"], {
-        ignored: ["node_modules", "**/node_modules", ".next/**"],
-        cwd: this.cwd,
-        awaitWriteFinish: true // should prevent events from firing twice
-      });
+    this.watcher = chokidar.watch(["**/api/**/*.{ts,js}"], {
+      ignored: ["node_modules", "**/node_modules", ".next/**"],
+      cwd: this.cwd,
+      awaitWriteFinish: true // should prevent events from firing twice
+    });
 
-      this.watcher.on("add", this.on("added"));
-      this.watcher.on("change", this.on("changed"));
-      this.watcher.on("unlink", this.on("deleted"));
-      this.watcher.on("ready", () => {
-        this.ready = true;
-      });
-    }
-  
-    public async close() {
-      await this.watcher.close();
-    }
-  
-    public async awaitReady() {
-      if (this.ready) {
-        return;
-      }
-  
-      await new Promise((resolve) => {
-        this.watcher.on("ready", resolve);
-      });
-    }
-  
-    private pathToCronJob: Record<string, DetectedCronJob> = {};
-  
-    public getDetectedJobs(): DetectedCronJob[] {
-      return Object.values(this.pathToCronJob);
-    }
-  
-    private async onNewJob(job: DetectedCronJob, filePath: string) {
-      // HTTP PUT /api/cron/:id
-      await this.onJobChanged(job, filePath);
-    }
-  
-    private async onJobRemoved(job: DetectedCronJob, filePath: string) {
-      // HTTP DELETE /api/cron/:id
-      delete this.pathToCronJob[filePath];
-    }
-  
-    private async onJobChanged(job: DetectedCronJob, filePath: string) {
-      // HTTP PUT /api/cron/:id
-      this.pathToCronJob[filePath] = job;
+    this.watcher.on("add", this.on("added"));
+    this.watcher.on("change", this.on("changed"));
+    this.watcher.on("unlink", this.on("deleted"));
+    this.watcher.on("ready", () => {
+      this.ready = true;
+    });
+  }
+
+  public async close() {
+    await this.watcher.close();
+  }
+
+  public async awaitReady() {
+    if (this.ready) {
+      return;
     }
 
-    private on(fileChangeType: "changed" | "deleted" | "added") {
-      return async (filePath: string) => {
-        const previousJob = this.pathToCronJob[filePath];
-  
-        console.log('filePath', filePath, fileChangeType)
-        if (fileChangeType === "deleted") {
-          if (previousJob) {
-            await this.onJobRemoved(previousJob, filePath);
-          }
-  
-          return;
-        }
-  
-        const contents = await fs.readFile(path.join(this.cwd, filePath), "utf-8");
-        const ast = parseFile(contents)
-        if(!ast) return;
+    await new Promise((resolve) => {
+      this.watcher.on("ready", resolve);
+    });
+  }
 
-        if(ast.type === 'cron') {
-            console.log('cron', ast.options)
-        }
-        if(ast.type === 'queue') {
-            console.log('queue', ast.options)
-        }
-        
-
-
-        // TODO parse contents to get options
-        if(this.hashTable.get(filePath) === this.toHash(contents)) {
-            console.log('no change')
-            return;
-        }
-        console.log('isProd', this.isProduction, fileChangeType, filePath)
-        // console.log(this.hashTable)
-
-        this.hashTable.set(filePath, this.toHash(contents))
-        
-        const newJob =  { isValid: true, schedule: '' } as DetectedCronJob;
-  
-        if (!newJob) {
-          if (previousJob) {
-            await this.onJobRemoved(previousJob, filePath);
-          }
-  
-          return;
-        }
-  
-        if (!newJob.isValid) {
-          console.error(
-            `🚨Encountered invalid cron expression: ${newJob.schedule}`
-          );
-          return;
-        }
-  
-        if (!previousJob && newJob) {
-          return await this.onNewJob(newJob, filePath);
-        }
-  
-        if (previousJob && newJob) {
-          return await this.onJobChanged(newJob, filePath);
-        }
-      };
+  private async onDeleted(params: ParseFileResponse) {
+    if(params.type === 'cron') {
+      console.log('deleting cron', params.options)
     }
-
-    private toHash(str: string) {
-        return createHash('sha256').update(str).digest('hex')
+    if(params.type === 'queue') {
+        console.log('deleting queue', params.options)
     }
   }
+
+  private async onChanged(params: ParseFileResponse) {
+      if(params.type === 'cron') {
+        console.log('changing cron', params.options)
+      }
+      if(params.type === 'queue') {
+          console.log('changing queue', params.options)
+      }
+  }
+
+  private on(fileChangeType: "changed" | "deleted" | "added") {
+    return async (filePath: string) => {
+      const currentRouteHash = this.hashTable.get(filePath)
+      const contents = await fs.readFile(path.join(this.cwd, filePath), "utf-8");
+      const slsqConfig = parseFile({ file: contents, isProduction: this.isProduction })
+
+      if (currentRouteHash === this.toHash(contents)) {
+        return; // no change
+      }
+      if (!slsqConfig) return;
+
+      switch (fileChangeType) {
+        case "changed":
+        case "added": {
+          // no route means this is the first time we're seeing this file
+          if (!currentRouteHash) {
+            this.hashTable.set(filePath, this.toHash(contents))
+            return await this.onChanged(slsqConfig);
+          }
+          break;
+        }
+
+        case "deleted": {
+          if (currentRouteHash) {
+            await this.onDeleted(slsqConfig);
+            this.hashTable.delete(filePath)
+          }
+          break;
+        }
+
+        default:
+          throw new Error(`Unknown file change type: ${fileChangeType}`);
+      }
+    }
+  }
+
+  private toHash(str: string) {
+    const buffer = Buffer.from(str, 'utf-8');
+    return createHash('sha256').update(buffer).digest('hex')
+  }
+}
