@@ -3,12 +3,16 @@ import * as path from "path";
 import * as fs from "fs/promises";
 import { createHash } from "crypto";
 import { parseFile, ParseFileResponse } from "./utils/parser";
+import { QueueClient } from "./queue/client";
+import { CronClient } from "./cron/client";
 
 export class SlsqDetector {
   private watcher: chokidar.FSWatcher;
   private ready = false;
   private cwd = process.cwd();
   private hashTable: Map<string, string> = new Map();
+  private queueClient: QueueClient;
+  private cronClient: CronClient;
 
   constructor(
     private isProduction: boolean
@@ -26,6 +30,9 @@ export class SlsqDetector {
     this.watcher.on("ready", () => {
       this.ready = true;
     });
+
+    this.queueClient = new QueueClient();
+    this.cronClient = new CronClient();
   }
 
   public async close() {
@@ -42,43 +49,48 @@ export class SlsqDetector {
     });
   }
 
+  // TODO implement
   private async onDeleted(params: ParseFileResponse) {
-    if(params.type === 'cron') {
+    if (params.type === 'cron') {
       console.log('deleting cron', params.options)
     }
-    if(params.type === 'queue') {
-        console.log('deleting queue', params.options)
+    if (params.type === 'queue') {
+      console.log('deleting queue', params.options)
     }
   }
 
   private async onChanged(params: ParseFileResponse) {
-      if(params.type === 'cron') {
-        console.log('changing cron', params.options)
-      }
-      if(params.type === 'queue') {
-          console.log('changing queue', params.options)
-      }
+    if (params.type === 'cron') {
+      await this.cronClient
+        .createOrUpdate({
+          expression: params.options.expression,
+          method: params.options.method,
+          name: params.options.name,
+          retries: params.options.retries,
+          target: params.options.target
+        })
+    }
+    if (params.type === 'queue') {
+      await this.queueClient.createOrUpdateQueue(params.options.name, {
+        retries: params.options.retries
+      })
+    }
   }
 
   private on(fileChangeType: "changed" | "deleted" | "added") {
     return async (filePath: string) => {
       const currentRouteHash = this.hashTable.get(filePath)
-      const contents = await fs.readFile(path.join(this.cwd, filePath), "utf-8");
-      const slsqConfig = parseFile({ file: contents, isProduction: this.isProduction })
+      const newContent = await fs.readFile(path.join(this.cwd, filePath), "utf-8");
+      const slsqConfig = parseFile({ file: newContent, isProduction: this.isProduction })
 
-      if (currentRouteHash === this.toHash(contents)) {
-        return; // no change
-      }
-      if (!slsqConfig) return;
+      if (currentRouteHash === this.toHash(newContent)) return; // no change
+      if (!slsqConfig) return
 
       switch (fileChangeType) {
         case "changed":
         case "added": {
-          // no route means this is the first time we're seeing this file
-          if (!currentRouteHash) {
-            this.hashTable.set(filePath, this.toHash(contents))
-            return await this.onChanged(slsqConfig);
-          }
+          this.hashTable.set(filePath, this.toHash(newContent))
+          await this.onChanged(slsqConfig);
           break;
         }
 
@@ -89,7 +101,6 @@ export class SlsqDetector {
           }
           break;
         }
-
         default:
           throw new Error(`Unknown file change type: ${fileChangeType}`);
       }

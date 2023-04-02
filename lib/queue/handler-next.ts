@@ -23,7 +23,6 @@ export function Queue(params: {
 }) {
   const queueClient = new QueueClient()
   const { handler, options } = params
-  let queueInitDone = false
 
   async function nextApiHandler(
     req: NextApiRequest,
@@ -33,14 +32,6 @@ export function Queue(params: {
   }
 
   nextApiHandler.enqueue = async (enqueueOptions: EnqueueOptions) => {
-    if (!queueInitDone) {
-      // TODO migrate to detector
-      await queueClient.createOrUpdateQueue(options.name, {
-        retries: options.retries
-      })
-      queueInitDone = true
-    }
-
     const { method, body } = enqueueOptions
     let target: string;
 
