@@ -25,7 +25,7 @@ ServerlessQ lets you easily create **Message Queues** and **Cron Jobs** to truly
 <br/>
 
 ## Installation
-
+![Alt text](./assets/sdk.svg)
 Install the library through your desired package manager
 
 ```
