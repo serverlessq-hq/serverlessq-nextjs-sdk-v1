@@ -12,7 +12,7 @@
 
 ## Introduction
 
-`@ServerlessQ/nextjs` is a lightweight wrapper to easily utilize the managed queue by [ServerlessQ](https://serverlessq.com).
+`@serverlessQ/nextjs` is a lightweight wrapper to easily utilize the managed queue by [ServerlessQ](https://serverlessq.com).
 
 The SDK is for NextJS projects deployed on Vercel and makes use of Vercel environment variables.
 
@@ -25,7 +25,6 @@ ServerlessQ lets you easily create **Message Queues** and **Cron Jobs** to truly
 <br/>
 
 ## Installation
-![Alt text](./assets/sdk.svg)
 Install the library through your desired package manager
 
 ```
@@ -50,7 +49,7 @@ You need to set the `SERVERLESSQ_API_TOKEN` to have access to the system.
 
 1. Create an account at [app.serverlessq.com](https://app.serverlessq.com) and follow the steps described in our [documentation](https://docs.serverlessq.com/sdks/javascript) to get the API token.
 
-> 🔜 you can also use our Vercel Integration to automate that task 🙂
+> 💡 you can also use our [Vercel Integration](https://vercel.com/integrations/serverlessq)to automate that task 🙂
 
 If you want to use this library locally please create `.env.local` file with the following value:
 
@@ -62,7 +61,24 @@ New for you? Go check out the official next.js docs on [how to create env files 
 
 <br/>
 
-## Create a Queue from an API Function
+## Setup the SDK
+Within your `next.config.js` file you need to add the following code:
+
+```ts
+const { withServerlessQ } = require('@serverlessq/nextjs')
+
+
+module.exports = withServerlessQ({
+  // your nextjs config
+})
+```
+
+What does this do? If you are running your NextJS application locally e.g. through `next dev` it will start to watch the `/api` folder for changes. If you import a queue or cron it will automatically create the corresponding API function for you and will update their settings on save. In order to prevent to override production queues/crons it will only create the corresponding resources with a prefix `DEV_` if you are running your application locally. If you create a production build through `next build` it will create the resources without the prefix.
+
+![Alt text](./assets/sdk.png)
+
+## Queue
+### Create a Queue from an API Function
 
 Create a new [API Route](https://nextjs.org/docs/api-routes/introduction) within your NextJS application, e.g. `pages/api/queue`.
 
@@ -70,16 +86,16 @@ You can have several queues in multiple queue functions.
 
 ```ts
 // pages/api/queue
-export default Queue(
-  "SendNewsletter" // Name of the queue,
-  "api/queue" // Path to this queue,
-  async (req, res) => { // Handler function. This will be executed once you enqueue a job.
-    const result = await doSomethingImportant();
-    console.log("Queue Job", result);
-    res.send("finished");
-  },
-  { retries: 1, urlToOverrideWhenRunningLocalhost: "https://mock.codes/201" } // Additional optional options
-);
+export default Queue({
+    options: {
+        name: 'SendNewsletter',
+        retries: 2,
+        urlToOverrideWhenRunningLocalhost: 'https://5923-2001-16b8-2ad0-1a00-830-bf28-256f-a5ae.eu.ngrok.io/api/queue'
+    },
+    handler: (req, res) => {
+        res.status(200).json({ name: 'John Doe' })
+    }
+})
 ```
 
 <br/>
@@ -107,6 +123,30 @@ export default async function enqueue(
   }
 }
 ```
+
+## Crons
+
+### Create a Cronjob from an API Function
+
+```ts
+import { Cron } from '@serverlessq/nextjs'
+
+// pages/api/cleanup
+export default Cron({
+    options: {
+        name: 'CleanupDb',
+        retries: 3,
+        expression: '0 0 0 * * *', // every day at midnight
+        target: 'https://5923-2001-16b8-2ad0-1a00-830-bf28-256f-a5ae.eu.ngrok.io/api/queue'
+    },
+    handler: (req, res) => {
+        // do something
+        res.status(200).json({ status: 'OK' })
+    }
+})
+```
+
+<br/>
 
 ## Types
 
@@ -153,6 +193,8 @@ You can use the `enqueue` function to directly enqueue a job to a certain `Queue
 - [x] Enqueue messages with ServerlessQ
 - [x] Build Wrapper for NextJS API Routes
 - [x] Allow dynamic queue creation
+- [x] Allow dynamic creation of cron jobs
+- [ ] Implement a local proxy for testing queues and crons
 - [ ] Add the option for advanced queue options e.g. filter, tags
 
 <br/>

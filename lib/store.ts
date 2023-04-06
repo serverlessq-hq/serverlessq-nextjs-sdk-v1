@@ -17,12 +17,10 @@ export class Store {
     }
 
     public addQueue(name: string, queue: Queue): void {
-        console.log('adding queue', name, queue)
         this.queues.set(name, queue);
       }
     
       public getQueue(name: string): Queue | undefined {
-        console.log('get queue', name)
         return this.queues.get(name);
       }
     

@@ -1,5 +1,5 @@
 {
-  "include": ["dist"],
+  "include": ["lib"],
   "exclude": ["node_modules", "lib/**/*.test.ts", "./tsconfig.json", "./assets"],
   "compilerOptions": {
     "target": "ES5",
