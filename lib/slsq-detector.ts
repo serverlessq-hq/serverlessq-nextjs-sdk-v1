@@ -5,7 +5,6 @@ import { createHash } from "crypto";
 import { parseFile, ParseFileResponse } from "./utils/parser";
 import { QueueClient } from "./queue/client";
 import { CronClient } from "./cron/client";
-
 export class SlsqDetector {
   private watcher: chokidar.FSWatcher;
   private ready = false;
@@ -17,7 +16,6 @@ export class SlsqDetector {
   constructor(
     private isProduction: boolean
   ) {
-
     this.watcher = chokidar.watch(["**/api/**/*.{ts,js}"], {
       ignored: ["node_modules", "**/node_modules", ".next/**"],
       cwd: this.cwd,

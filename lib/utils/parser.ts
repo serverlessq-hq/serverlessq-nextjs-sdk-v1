@@ -13,7 +13,7 @@ export const parseFile = (params: { file: string, isProduction: boolean }): Pars
     const callExpression = ast?.body.find(node => node?.type === 'ExportDefaultDeclaration')?.declaration
     const type = callExpression?.callee?.name ?? ''
 
-    const PREFIX = params.isProduction ? 'PROD_' : 'DEV_'
+    const PREFIX = params.isProduction ? '' : 'DEV_'
 
     const options = extractOptions(callExpression);
 

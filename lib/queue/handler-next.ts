@@ -17,11 +17,13 @@ export interface EnqueueOptions {
   body?: { [key: string]: any }
 }
 
+const queueClient = new QueueClient()
+
 export function Queue(params: {
   handler: NextApiHandler,
   options: QueueOptions
 }) {
-  const queueClient = new QueueClient()
+  
   const { handler, options } = params
 
   async function nextApiHandler(
@@ -45,7 +47,9 @@ export function Queue(params: {
     } else {
       target = `https://${VERCEL_URL}/${extractApiRoute(__filename)}`
     }
+
     return queueClient.enqueue({
+      name: options.name,
       method,
       target,
       body

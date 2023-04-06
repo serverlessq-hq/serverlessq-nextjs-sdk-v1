@@ -3,13 +3,14 @@ import { checkStringForSlashes } from '../utils/sanitize-input'
 import { OPTIONS_ERROR_MESSAGE } from '../utils/constants'
 import axiosInstance, { createError } from '../utils/axios'
 import { AxiosRequestConfig } from 'axios'
+import { Store } from '../store'
 
 type QueueResponse = {
   requestId: string
   message: string
 }
 
-type Queue = {
+export type Queue = {
   queueType: string
   userId: string
   updatedAt: string
@@ -31,29 +32,30 @@ export type EnqueueOptionsWithQueueId = {
   target: string
   method: HttpMethod
   queueId: string
+  name: string
   body?: { [key: string]: any }
 }
 
 type EnqueueOptions = Omit<EnqueueOptionsWithQueueId, 'queueId'>
 export class QueueClient {
-  private queueName: string | undefined
-  private queueId: string | undefined
+  private store = Store.getInstance()
 
   createOrUpdateQueue = async (
     nameOfQueue: string,
     options: { retries: number }
   ): Promise<Queue> => {
-    this.queueName = nameOfQueue
-
     if (checkStringForSlashes(nameOfQueue)) {
       throw new Error('Queue name cannot contain slashes')
     }
 
     try {
       const queue = (
-        await axiosInstance.post(`/queues/${this.queueName}`, options)
+        await axiosInstance.post(`/queues/${nameOfQueue}`, options)
       ).data as Queue
-      this.queueId = queue.id
+
+
+      this.store.addQueue(nameOfQueue, queue)
+
       return queue
     } catch (error) {
       return createError(error, 'could not create or update queue')
@@ -64,20 +66,25 @@ export class QueueClient {
    * send a message to the `Queue`
    */
   enqueue = async (options: EnqueueOptions): Promise<QueueResponse> => {
-    const { method, target, body } = options
+    const { method, target, body, name } = options
 
     this.validateOptionsOrThrow(options)
+
+    const PREFIX = process.env.NODE_ENV === 'production' ? '' : 'DEV_';
+
+    const queue = this.store.getQueue(`${PREFIX}${name}`)
 
     const config: AxiosRequestConfig = {
       method,
       params: {
-        id: this.queueId,
+        id: queue?.id,
         target
       },
       ...(body && { data: { ...body } })
     }
 
     try {
+      console.log(config)
       const response = await axiosInstance.request(config)
       return response.data as QueueResponse
     } catch (error) {

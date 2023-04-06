@@ -13,6 +13,9 @@
     "Serverless",
     "Next.js"
   ],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
@@ -65,9 +68,6 @@
   },
   "peerDependencies": {
     "next": "^12.1.4 || ^13"
-  },
-  "directories": {
-    "lib": "lib"
   },
   "repository": {
     "type": "git",
